@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width", initial-scale=1.0>
+    <title>SLRC-2023-Timer</title>
+
+    <link rel="stylesheet" href="style.css" />
+
+    </head>
+
+    <body>
+        <div class="container">
+            <div class="logo">
+                <img src="./images/SLRC Logo.png">
+            </div>
+            <div class="watch">
+                <div class="outer-circle">
+                    <div class="inner-circle">
+                        <span class="text min">00 : </span>
+                        <span class="text sec">&nbsp;00 :</span>
+                        <span class="text msec">&nbsp;00 </span>
+
+                    </div>
+                </div>
+                <div class="button-wrapper">
+                    <button class="button reset hidden">Reset</button>
+                    <button class="button play">Play</button>
+                    <button class="button lap hidden">Laps</button>
+                </div>
+            </div>
+            <ul class="laps">
+
+                <button class="lap-clear-button hidden">Clear All</button>
+            </ul>
+        </div>
+        <script>
+            const playButton =  document.getElementsByClassName("play")[0];
+            const resetButton = document.getElementsByClassName("reset")[0];
+            const lapButton = document.getElementsByClassName("lap")[0];
+            const clearButton = document.getElementsByClassName("lap-clear-button")[0];
+            const minute = document.getElementsByClassName("min")[0];
+            const second = document.getElementsByClassName("sec")[0];
+            const centiSecond = document.getElementsByClassName("msec")[0];
+            const laps = document.getElementsByClassName("laps")[0];
+            const firstbg = document.getElementsByClassName("outer-circle")[0];
+
+            /*****CHANGE THRESHOLD VALUES HERE******/
+
+            const MINUTE_THRESHOLD = 0;
+            const SECOND_THRESHOLD = 10;
+            /***************************************/
+
+            let isPlay = false;
+            let secCounter = 0;
+            let sec;
+            let centiSec;
+            let centiCounter =0;
+            let minCounter =0;
+            let min;
+            let isReset = false;
+            let lapItem=0;
+            let preCenti =0;
+            let preSec = 0;
+            let preMin =0;
+            let currentCenti =0;
+            let currentSec = 0;
+            let currentMin =0;
+
+            function setZero(num, l){
+                if(l==100 && num<10){
+                    return ('00'+num);
+                }
+                if(num<l){
+                    return ('0'+num);
+                }
+                else{
+                    return num;
+                }
+
+            }
+
+            const toggleButton = ()=> {
+                lapButton.classList.remove("hidden");
+                resetButton.classList.remove("hidden");
+            }
+
+            const play = ()=>{
+                if(! isPlay && ! isReset) {
+                    playButton.innerHTML = "Pause";
+                    firstbg.classList.add("animation-firstbg");
+                    min = setInterval(()=>{
+                            if(minCounter===60){
+                                minCounter = 0;
+                            }
+                            minute.innerHTML =  `${setZero(++minCounter,10)} :&nbsp; `;
+                        },60*1000);
+                    sec = setInterval(()=>{
+                            if(secCounter===60){
+                                secCounter = 0;
+                            }
+                            if(minCounter>=MINUTE_THRESHOLD && secCounter>=SECOND_THRESHOLD){
+                                firstbg.classList.remove("animation-firstbg");
+                                firstbg.classList.add("animation-secondbg");
+                            }
+                            second.innerHTML =  `&nbsp;${setZero(++secCounter,10)} :&nbsp; `;
+                        },1000);
+                    centiSec = setInterval(()=>{
+                            if(centiCounter === 100){
+                                centiCounter=0;
+                            }
+                            centiSecond.innerText =  `${setZero(++centiCounter,100)}  `;
+                        },10);
+                    
+                    isPlay = true;
+                    isReset = true;
+                }
+                else{
+                    playButton.innerHTML = "Play";
+                    clearInterval(min);
+                    clearInterval(sec);
+                    clearInterval(centiSec);
+                    isPlay = false;
+                    isReset = false;
+                    firstbg.classList.remove("animation-firstbg");
+                    firstbg.classList.remove("animation-secondbg");
+                }
+                toggleButton();
+            }
+
+            const reset = () =>{
+                isReset = true;
+                secCounter = 0;
+                minCounter=0;
+                centiSecCounter = 0;
+                play();
+                lapItem=0;
+                clearAll();
+                lapButton.classList.add("hidden");
+                resetButton.classList.add("hidden");
+                second.innerHTML = "&nbsp;00 :";
+                centiSecond.innerHTML= "&nbsp;00";
+                minute.innerHTML = "00 :";
+                
+
+
+            }
+
+            const lap = () => {
+                const li = document.createElement("li");
+                const number = document.createElement("span");
+                const timeStamp = document.createElement("span");
+                const gap = document.createElement("div");
+
+                li.setAttribute("class", "lap-item");
+                number.setAttribute("class", "number");
+                timeStamp.setAttribute("class", "time-stamp");
+                gap.setAttribute("class", "gap");
+
+                if(lapItem>0){
+                    currentCenti = centiCounter;
+                    currentSec = secCounter;
+                    currentMin = minCounter;
+                    if (currentCenti < preCenti) {
+                        currentCenti += 100;
+                        currentSec -= 1;
+                    }
+                    if (currentSec < preSec) {
+                        currentSec += 60;
+                        currentMin -= 1;
+                    }
+                    if (currentMin < preMin) {
+                        currentMin += 60;
+                    }
+                    gap.innerHTML = `+ ${setZero(currentMin-preMin,10)} : ${setZero(currentSec-preSec,10)} : ${setZero(currentCenti-preCenti,100)}`
+                }
+                number.innerText = `# ${++lapItem}`;
+                timeStamp.innerHTML = `${setZero(minCounter,10)} : ${setZero(secCounter,10)} : ${setZero(centiCounter,100)}`;
+                preMin = minCounter;
+                preSec = secCounter;
+                preCenti = centiCounter;
+
+                li.append(number, timeStamp, gap);
+                laps.append(li);
+                clearButton.classList.remove("hidden");
+            }
+
+            const clearAll = ()=>{
+                laps.innerHTML= '';
+                laps.append(clearButton);
+                clearButton.classList.add("hidden");
+            }
+            
+            playButton.addEventListener("click", play);
+            resetButton.addEventListener("click", reset);
+            lapButton.addEventListener("click", lap);
+            clearButton.addEventListener("click", clearAll);
+
+        </script>
+    </body>
+</html>
